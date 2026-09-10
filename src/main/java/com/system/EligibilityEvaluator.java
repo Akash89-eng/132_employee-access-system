@@ -5,54 +5,71 @@ import java.util.Arrays;
 import java.util.List;
 
 public class EligibilityEvaluator {
-    private static final List<String> AUTHORIZED_DEPTS = Arrays.asList("IT", "HR", "FINANCE", "ADMINISTRATION");
+
+    // Defined in uppercase to avoid compilation symbol issues
+    private static final List<String> AUTHORIZED_DEPTS = Arrays.asList(
+        "IT", "HR", "FINANCE", "ADMINISTRATION"
+    );
 
     public static class EvaluationResult {
-        public String status;
-        public List<String> reasons = new ArrayList<>();
+        public final String status;
+        public final List<String> reasons;
+
+        public EvaluationResult(String status, List<String> reasons) {
+            this.status = status;
+            this.reasons = reasons;
+        }
     }
 
-    public EvaluationResult evaluate(Employee emp, int requiredResourceLevel) {
-        EvaluationResult result = new EvaluationResult();
-        
-        // Input Validation Rule
-        if (emp == null || emp.getId() == null || emp.getName() == null) {
-            throw new IllegalArgumentException("Employee data cannot be null or incomplete.");
+    public EvaluationResult evaluate(Employee employee, int requiredClearance) {
+        if (employee == null) {
+            throw new IllegalArgumentException("Employee record cannot be null.");
         }
 
-        // Rule 1: Age check
-        if (emp.getAge() < 21) {
-            result.reasons.add("Employee must be at least 21 years old (Current: " + emp.getAge() + ").");
+        List<String> reasons = new ArrayList<>();
+
+        // 1. Age condition (at least 21)
+        if (employee.getAge() < 21) {
+            reasons.add("Employee must be at least 21 years old (Current: " + employee.getAge() + ").");
         }
 
-        // Rule 2: Department check
-        if (emp.getDepartment() == null || !AUTHORIZED_DEPTs.contains(emp.getDepartment().toUpperCase())) {
-            result.reasons.add("Department '" + emp.getDepartment() + "' is not authorized.");
+        // 2. Department condition (must belong to authorized list)
+        if (employee.getDepartment() == null || !AUTHORIZED_DEPTS.contains(employee.getDepartment().trim().toUpperCase())) {
+            reasons.add("Department '" + employee.getDepartment() + "' is not authorized.");
         }
 
-        // Rule 3: Active employment status check
-        if (!"ACTIVE".equalsIgnoreCase(emp.getEmploymentType())) {
-            result.reasons.add("Employment status must be Active (Current: " + emp.getEmploymentType() + ").");
+        // 3. Employment status condition (must be active)
+        if (employee.getEmploymentStatus() == null || !"ACTIVE".equalsIgnoreCase(employee.getEmploymentStatus().trim())) {
+            reasons.add("Employment status is not active.");
         }
 
-        // Rule 4: ID validity status check
-        if (!emp.isIdValid()) {
-            result.reasons.add("Employee ID status is invalid.");
+        // 4. ID validity condition
+        if (!employee.isIdValid()) {
+            reasons.add("Employee ID is invalid or expired.");
         }
 
-        // Rule 5: Security clearance tier classification
-        boolean clearanceFailed = emp.getSecurityClearanceLevel() < requiredResourceLevel;
-
-        // Final Classification Mapping
-        if (!result.reasons.isEmpty()) {
-            result.status = "Not Eligible";
-        } else if (clearanceFailed) {
-            result.status = "Conditionally Eligible";
-            result.reasons.add("Insufficient security clearance (Required: " + requiredResourceLevel + ", Has: " + emp.getSecurityClearanceLevel() + ").");
-        } else {
-            result.status = "Eligible";
+        // 5. Security clearance condition
+        boolean clearanceSufficient = employee.getSecurityClearance() >= requiredClearance;
+        if (!clearanceSufficient) {
+            reasons.add("Insufficient security clearance (Required: " + requiredClearance 
+                        + ", Current: " + employee.getSecurityClearance() + ").");
         }
 
-        return result;
+        // If no rules failed
+        if (reasons.isEmpty()) {
+            return new EvaluationResult("Eligible", reasons);
+        }
+
+        // Check if only the security clearance failed while all basic conditions passed
+        boolean passedBaseRules = (employee.getAge() >= 21)
+                && (employee.getDepartment() != null && AUTHORIZED_DEPTS.contains(employee.getDepartment().trim().toUpperCase()))
+                && ("ACTIVE".equalsIgnoreCase(employee.getEmploymentStatus() != null ? employee.getEmploymentStatus().trim() : ""))
+                && employee.isIdValid();
+
+        if (passedBaseRules && !clearanceSufficient) {
+            return new EvaluationResult("Conditionally Eligible", reasons);
+        }
+
+        return new EvaluationResult("Not Eligible", reasons);
     }
 }
