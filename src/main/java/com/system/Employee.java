@@ -5,27 +5,32 @@ public class Employee {
     private String name;
     private int age;
     private String department;
-    private String employmentType; // "Active", "Inactive", "Suspended"
-    private int securityClearanceLevel; // 1 (Low) to 3 (Confidential/High)
-    private boolean isIdValid;
+    private String employmentStatus; // e.g., "Active"
+    private int securityClearance;
+    private boolean idValid;
 
     public Employee(String id, String name, int age, String department, 
-                    String employmentType, int securityClearanceLevel, boolean isIdValid) {
+                    String employmentStatus, int securityClearance, boolean idValid) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("Employee ID cannot be empty.");
+        }
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Employee name cannot be empty.");
+        }
         this.id = id;
         this.name = name;
         this.age = age;
         this.department = department;
-        this.employmentType = employmentType;
-        this.securityClearanceLevel = securityClearanceLevel;
-        this.isIdValid = isIdValid;
+        this.employmentStatus = employmentStatus;
+        this.securityClearance = securityClearance;
+        this.idValid = idValid;
     }
 
-    // Getagers and Setters
     public String getId() { return id; }
     public String getName() { return name; }
     public int getAge() { return age; }
     public String getDepartment() { return department; }
-    public String getEmploymentType() { return employmentType; }
-    public int getSecurityClearanceLevel() { return securityClearanceLevel; }
-    public boolean isIdValid() { return isIdValid; }
+    public String getEmploymentStatus() { return employmentStatus; }
+    public int getSecurityClearance() { return securityClearance; }
+    public boolean isIdValid() { return idValid; }
 }
